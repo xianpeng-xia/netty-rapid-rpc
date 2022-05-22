@@ -13,7 +13,6 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import net.sf.cglib.reflect.FastClass;
-import net.sf.cglib.reflect.FastConstructor;
 import net.sf.cglib.reflect.FastMethod;
 
 /**

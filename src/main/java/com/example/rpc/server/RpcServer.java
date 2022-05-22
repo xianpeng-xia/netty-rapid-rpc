@@ -4,7 +4,6 @@ import com.example.rpc.codec.RpcDecoder;
 import com.example.rpc.codec.RpcEncoder;
 import com.example.rpc.codec.RpcRequest;
 import com.example.rpc.codec.RpcResponse;
-import com.example.rpc.config.RpcConfigAbstract;
 import com.example.rpc.config.provider.ProviderConfig;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelFuture;
