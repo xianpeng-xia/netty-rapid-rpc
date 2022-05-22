@@ -1,6 +1,7 @@
 package com.example.rpc.client;
 
 
+import com.example.rpc.client.proxy.RpcAsyncProxy;
 import com.example.rpc.client.proxy.RpcProxyImpl;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -16,6 +17,7 @@ public class RpcClient {
     private long timeout;
 
     private final Map<Class<?>, Object> syncProxyInterfaceMap = new ConcurrentHashMap<>();
+    private final Map<Class<?>, Object> asyncProxyInterfaceMap = new ConcurrentHashMap<>();
 
     public void initClient(String serverAddress, long timeout) {
         this.serverAddress = serverAddress;
@@ -45,4 +47,15 @@ public class RpcClient {
         return (T) proxy;
     }
 
+    /**
+     * 异步调用方法
+     */
+    public <T> RpcAsyncProxy invokeAsync(Class<T> interfaceClass) {
+        if (asyncProxyInterfaceMap.containsKey(interfaceClass)) {
+            return (RpcAsyncProxy) asyncProxyInterfaceMap.get(interfaceClass);
+        }
+        RpcProxyImpl<T> asyncProxyImpl = new RpcProxyImpl<>(interfaceClass, timeout);
+        asyncProxyInterfaceMap.put(interfaceClass, asyncProxyImpl);
+        return asyncProxyImpl;
+    }
 }
