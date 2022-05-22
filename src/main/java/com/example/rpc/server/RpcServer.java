@@ -4,6 +4,8 @@ import com.example.rpc.codec.RpcDecoder;
 import com.example.rpc.codec.RpcEncoder;
 import com.example.rpc.codec.RpcRequest;
 import com.example.rpc.codec.RpcResponse;
+import com.example.rpc.config.RpcConfigAbstract;
+import com.example.rpc.config.provider.ProviderConfig;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
@@ -15,6 +17,8 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 
@@ -28,6 +32,8 @@ public class RpcServer {
     private String serverAddress;
     private EventLoopGroup boosGroup = new NioEventLoopGroup();
     private EventLoopGroup workGroup = new NioEventLoopGroup();
+
+    private volatile Map<String, Object> handlerMap = new HashMap<>();
 
     public RpcServer(String serverAddress) throws InterruptedException {
         this.serverAddress = serverAddress;
@@ -52,7 +58,7 @@ public class RpcServer {
                     cp.addLast(new RpcDecoder(RpcRequest.class));
                     cp.addLast(new RpcEncoder(RpcResponse.class));
                     // 实际处理业务的RpcConnectHandler
-                    cp.addLast(new RpcServerHandler());
+                    cp.addLast(new RpcServerHandler(handlerMap));
                 }
             });
 
@@ -87,8 +93,10 @@ public class RpcServer {
     /**
      * 程序注册器
      */
-    public void registerProcessor() {
-
+    public void registerProcessor(ProviderConfig providerConfig) {
+        // key:providerConfig.interface(userService接口权限命名)
+        // value:providerConfig.ref(userService接口下的具体实现类userServiceImpl实例对象 )
+        handlerMap.put(providerConfig.getInterface(), providerConfig.getRef());
     }
 
     /**
