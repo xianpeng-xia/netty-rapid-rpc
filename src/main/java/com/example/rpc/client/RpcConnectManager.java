@@ -229,7 +229,7 @@ public class RpcConnectManager {
      */
     private void addHandler(RpcClientHandler handler) {
         connectedHandlerList.add(handler);
-        InetSocketAddress remotePeer = (InetSocketAddress) handler.getRemotePeer();
+        InetSocketAddress remotePeer = (InetSocketAddress) handler.getChannel().remoteAddress();
         connectedHandlerMap.put(remotePeer, handler);
         // 唤醒可用的业务执行器 signalAvailableHandler
         signalAvailableHandler();
