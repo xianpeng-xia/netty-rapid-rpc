@@ -46,12 +46,12 @@ public class RpcConnectManager {
     /**
      * 一个连接对应一个实际的业务处理器
      */
-    private Map<InetSocketAddress, RpcConnectHandler> connectedHandlerMap = new ConcurrentHashMap<>();
+    private Map<InetSocketAddress, RpcClientHandler> connectedHandlerMap = new ConcurrentHashMap<>();
 
     /**
      * 所有连接成功的地址所对应的任务执行器列表
      */
-    private CopyOnWriteArrayList<RpcConnectHandler> connectedHandlerList = new CopyOnWriteArrayList<>();
+    private CopyOnWriteArrayList<RpcClientHandler> connectedHandlerList = new CopyOnWriteArrayList<>();
 
     /**
      * 用于异步提交连接请求的线程池
@@ -80,14 +80,14 @@ public class RpcConnectManager {
     /**
      * 选择一个handler
      */
-    public RpcConnectHandler chooseHandler() {
-        CopyOnWriteArrayList<RpcConnectHandler> handlers = (CopyOnWriteArrayList<RpcConnectHandler>) this.connectedHandlerList.clone();
+    public RpcClientHandler chooseHandler() {
+        CopyOnWriteArrayList<RpcClientHandler> handlers = (CopyOnWriteArrayList<RpcClientHandler>) this.connectedHandlerList.clone();
         int size = handlers.size();
         while (isRunning && handlers.size() <= 0) {
             try {
                 boolean available = waitingForAvailableHandler();
                 if (available) {
-                    handlers = (CopyOnWriteArrayList<RpcConnectHandler>) this.connectedHandlerList.clone();
+                    handlers = (CopyOnWriteArrayList<RpcClientHandler>) this.connectedHandlerList.clone();
                     size = handlers.size();
                 }
             } catch (InterruptedException e) {
@@ -108,9 +108,9 @@ public class RpcConnectManager {
     public void stop() {
 
         isRunning = false;
-        for (RpcConnectHandler rpcConnectHandler : connectedHandlerList) {
-            rpcConnectHandler.close();
-            InetSocketAddress remotePeer = (InetSocketAddress) rpcConnectHandler.getRemotePeer();
+        for (RpcClientHandler rpcClientHandler : connectedHandlerList) {
+            rpcClientHandler.close();
+            InetSocketAddress remotePeer = (InetSocketAddress) rpcClientHandler.getRemotePeer();
             connectedHandlerMap.remove(remotePeer);
         }
         signalAvailableHandler();
@@ -121,7 +121,7 @@ public class RpcConnectManager {
     /**
      * 发起重连的方法，需要把对应的资源释放
      */
-    public void reconnect(final RpcConnectHandler handler, final SocketAddress remotePeer) {
+    public void reconnect(final RpcClientHandler handler, final SocketAddress remotePeer) {
         if (handler != null) {
             handler.close();
             connectedHandlerList.remove(handler);
@@ -162,16 +162,16 @@ public class RpcConnectManager {
         }
         // 3、如果serverNodeAddressSet不存在的连接，需要从connectedHandlerMap中移除
         for (int i = 0; i < connectedHandlerList.size(); i++) {
-            RpcConnectHandler rpcConnectHandler = connectedHandlerList.get(i);
-            InetSocketAddress remotePeer = (InetSocketAddress) rpcConnectHandler.getRemotePeer();
+            RpcClientHandler rpcClientHandler = connectedHandlerList.get(i);
+            InetSocketAddress remotePeer = (InetSocketAddress) rpcClientHandler.getRemotePeer();
             if (!newServerNodeAddressSet.contains(remotePeer)) {
                 log.info("remove invalid server node :{}", remotePeer);
-                RpcConnectHandler handler = connectedHandlerMap.get(remotePeer);
+                RpcClientHandler handler = connectedHandlerMap.get(remotePeer);
                 if (handler != null) {
                     handler.close();
                     connectedHandlerMap.remove(remotePeer);
                 }
-                connectedHandlerList.remove(rpcConnectHandler);
+                connectedHandlerList.remove(rpcClientHandler);
             }
         }
     }
@@ -214,7 +214,7 @@ public class RpcConnectManager {
             public void operationComplete(ChannelFuture future) throws Exception {
                 if (future.isSuccess()) {
                     log.info("successfully connect to remote server,remote peer = {}", remotePeer);
-                    RpcConnectHandler handler = future.channel().pipeline().get(RpcConnectHandler.class);
+                    RpcClientHandler handler = future.channel().pipeline().get(RpcClientHandler.class);
                     addHandler(handler);
                 }
             }
@@ -227,7 +227,7 @@ public class RpcConnectManager {
      * 加到缓存中
      * connectedHandlerList & connectedHandlerMap
      */
-    private void addHandler(RpcConnectHandler handler) {
+    private void addHandler(RpcClientHandler handler) {
         connectedHandlerList.add(handler);
         InetSocketAddress remotePeer = (InetSocketAddress) handler.getRemotePeer();
         connectedHandlerMap.put(remotePeer, handler);
@@ -264,10 +264,10 @@ public class RpcConnectManager {
      * 连接失败时，及时释放资源，清空缓存
      */
     private void clearConnected() {
-        for (final RpcConnectHandler rpcConnectHandler : connectedHandlerList) {
+        for (final RpcClientHandler rpcClientHandler : connectedHandlerList) {
             // 通过具体的RpcConnectHandler找到具体的remotePeer
-            SocketAddress remotePeer = rpcConnectHandler.getRemotePeer();
-            RpcConnectHandler handler = this.connectedHandlerMap.get(remotePeer);
+            SocketAddress remotePeer = rpcClientHandler.getRemotePeer();
+            RpcClientHandler handler = this.connectedHandlerMap.get(remotePeer);
             if (handler != null) {
                 handler.close();
                 connectedHandlerMap.remove(remotePeer);

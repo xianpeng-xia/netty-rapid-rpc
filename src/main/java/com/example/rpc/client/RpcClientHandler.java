@@ -1,5 +1,6 @@
 package com.example.rpc.client;
 
+import com.example.rpc.codec.RpcResponse;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFutureListener;
@@ -11,7 +12,7 @@ import java.net.SocketAddress;
  * @author xianpeng.xia
  * on 2022/5/22 10:24
  */
-public class RpcConnectHandler extends SimpleChannelInboundHandler<Object> {
+public class RpcClientHandler extends SimpleChannelInboundHandler<RpcResponse> {
 
     private Channel channel;
     private SocketAddress remotePeer;
@@ -26,11 +27,10 @@ public class RpcConnectHandler extends SimpleChannelInboundHandler<Object> {
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
         super.channelActive(ctx);
         this.remotePeer = this.channel.remoteAddress();
-
     }
 
     @Override
-    protected void channelRead0(ChannelHandlerContext ctx, Object msg) throws Exception {
+    protected void channelRead0(ChannelHandlerContext ctx, RpcResponse msg) throws Exception {
 
     }
 
